@@ -1,8 +1,7 @@
-
 """
-Aviator Crash Signal Bot
-Historical-data analysis and paper-trading signals.
-No real-money betting or automatic betting.
+Aviator Signal Bot
+Historical analysis and paper-trading only.
+No guaranteed predictions or real-money betting.
 """
 
 import csv
@@ -10,7 +9,8 @@ import os
 from statistics import mean
 
 DATA_FILE = "crash_history.csv"
-TARGET = 2.0
+TARGETS = (1.77, 2.12)
+MIN_HISTORY = 30
 
 
 def load_results():
@@ -18,45 +18,56 @@ def load_results():
         return []
 
     results = []
+
     with open(DATA_FILE, newline="", encoding="utf-8") as file:
         for row in csv.reader(file):
             try:
-                value = float(row[0].lower().replace("x", "").strip())
+                value = float(
+                    row[0].lower().replace("x", "").strip()
+                )
                 if value > 0:
                     results.append(value)
             except (ValueError, IndexError):
                 continue
+
     return results
 
 
 def analyze(results):
+    print("\n--- AVIATOR SIGNAL BOT ---")
+
     if not results:
-        print("No historical data found yet.")
+        print("SIGNAL: WAIT")
+        print("No historical results found.")
+        print("Add verified multipliers to crash_history.csv.")
         return
 
-    hits = sum(value >= TARGET for value in results)
-    rate = hits / len(results) * 100
-
-    print("\n--- Aviator History Report ---")
     print("Rounds analyzed:", len(results))
-    print(f"Rounds at or above {TARGET}x: {hits}")
-    print(f"Historical hit rate: {rate:.1f}%")
     print(f"Average multiplier: {mean(results):.2f}x")
 
-    # This is a tracking rule, not a prediction.
-    print("\nNEXT ROUND: WAIT")
-    print("Past rounds cannot reliably predict the next result.")
+    for target in TARGETS:
+        hits = sum(value >= target for value in results)
+        rate = hits / len(results) * 100
+        print(
+            f"Historical rounds reaching {target:.2f}x: "
+            f"{rate:.1f}% ({hits}/{len(results)})"
+        )
+
+    print("\n--- CURRENT SIGNAL ---")
+
+    if len(results) < MIN_HISTORY:
+        print("SKIP — not enough historical data.")
+    else:
+        print("WAIT — history alone cannot predict the next round.")
+
+    print(f"Lower target to evaluate: {TARGETS[0]:.2f}x")
+    print(f"Higher target to evaluate: {TARGETS[1]:.2f}x")
+    print("\nThese targets are not guaranteed safe odds.")
 
 
 def main():
-    print("AVIATOR CRASH SIGNAL BOT")
-    print("Analysis only — no real-money betting.")
-
     results = load_results()
     analyze(results)
-
-    print("\nAdd verified historical multipliers to")
-    print(DATA_FILE, "to analyze your dataset.")
 
 
 if __name__ == "__main__":
